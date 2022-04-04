@@ -1,0 +1,14 @@
+pub type XID = libc::c_ulong;
+pub type XEventClass = XID;
+pub type Window = XID;
+pub type Colormap = XID;
+pub type KeySym = XID;
+pub type VisualID = libc::c_ulong;
+pub type GContext = libc::c_uint;
+pub type _XPrivate = usize;
+pub type _XrmHashBucketRec = usize;
+pub type XPointer = *mut libc::c_char;
+pub type _XPrivDisplay = *mut super::structs::Display;
+pub type Time = libc::c_ulong;
+pub type Drawable = XID;
+pub type Atom = libc::c_ulong;
