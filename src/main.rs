@@ -1,17 +1,12 @@
 use std::time::Duration;
 
-use x11_man::ffi::constants::{Button1, Button5Mask, ButtonPress, ControlMask, ShiftMask};
-use x11_man::ffi::functions::XGrabButton;
-use x11_man::ffi::{constants::GrabModeAsync, functions::XGrabKey};
+use x11_man::ffi::constants::ButtonPress;
 use x11_man::ffi::{
     constants::{
-        Button1Mask, Button1MotionMask, Button2MotionMask, ButtonMotionMask, ButtonPressMask,
-        ButtonReleaseMask, FocusChangeMask, FocusOut, KeyRelease, KeyReleaseMask,
-        PointerMotionMask, PointerRoot,
+        FocusChangeMask, FocusOut, KeyRelease, KeyReleaseMask, PointerMotionMask, PointerRoot,
     },
     functions::{
-        XCreateSimpleWindow, XGetInputFocus, XListInputDevices, XOpenDisplay, XQueryPointer,
-        XRootWindow, XStoreName,
+        XGetInputFocus, XListInputDevices, XOpenDisplay, XQueryPointer, XRootWindow, XStoreName,
     },
     types::{Window, XEventClass},
 };
@@ -19,15 +14,14 @@ use x11_man::ffi::{
 use x11_man::ffi::{
     constants::{Expose, ExposureMask, KeyPress, KeyPressMask},
     functions::{
-        DeviceKeyPress, DeviceKeyRelease, XDrawString, XFillRectangle, XLookupString, XMapWindow,
-        XNextEvent, XOpenDevice, XQueryKeymap, XSelectExtensionEvent, XSelectInput,
+        device_key_press, device_key_release, XDrawString, XFillRectangle, XLookupString,
+        XMapWindow, XNextEvent, XOpenDevice, XSelectExtensionEvent, XSelectInput,
     },
     structs::{XComposeStatus, XDeviceKeyEvent, XEvent},
     types::KeySym,
 };
 
 fn main() {
-    safe_m_k();
     unsafe {
         let display = xlib::Display::new(None);
         let root = display.root_window(0);
@@ -67,57 +61,6 @@ fn safe_m_k() {
         println!("Keys: {:?}", keymap.get_keycodes());
         std::thread::sleep(Duration::from_millis(100));
     }
-}
-
-/// Get mouse and keyboard global state
-unsafe fn get_m_k_global() {
-    let display = XOpenDisplay(std::ptr::null());
-    let root = XRootWindow(display, (*display).default_screen);
-
-    loop {
-        let mut root_window = 0;
-        let mut child_window = 0;
-        let mut root_x = 0;
-        let mut root_y = 0;
-        let mut child_x = 0;
-        let mut child_y = 0;
-        let mut mask = 0;
-
-        XQueryPointer(
-            display,
-            root,
-            &mut root_window,
-            &mut child_window,
-            &mut root_x,
-            &mut root_y,
-            &mut child_x,
-            &mut child_y,
-            &mut mask,
-        );
-        let mut keys = [0i8; 32];
-
-        XQueryKeymap(display, &mut keys as *mut i8);
-
-        println!("Root: X: {}, Y: {}", root_x, root_y);
-        println!("Child: X: {}, Y: {}", child_x, child_y);
-        println!("Keys: {:?}", get_keycode(&keys));
-
-        std::thread::sleep(Duration::from_millis(1));
-    }
-}
-
-pub unsafe fn get_keycode(data: &[i8; 32]) -> Vec<usize> {
-    let mut result = Vec::new();
-    for i in 0..32 {
-        let mut j = 0;
-        while (j < 8) {
-            if data[i] & (1 << j) != 0 {
-                result.push(i * 8 + j);
-            }
-            j += 1;
-        }
-    }
-    result
 }
 
 unsafe fn get_fucused_window_input() {
@@ -176,9 +119,9 @@ unsafe fn device_get_input() {
     let mut o1 = -1;
     let mut o2 = -1;
 
-    DeviceKeyPress(device, &mut o1, &mut event_list[number]);
+    device_key_press(device, &mut o1, &mut event_list[number]);
     number += 1;
-    DeviceKeyRelease(device, &mut o2, &mut event_list[number]);
+    device_key_release(device, &mut o2, &mut event_list[number]);
     number += 1;
 
     if XSelectExtensionEvent(

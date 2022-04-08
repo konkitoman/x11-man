@@ -119,7 +119,7 @@ extern "C" {
     ) -> i32;
 }
 
-pub unsafe fn FindTypeAndClass(
+pub unsafe fn find_type_and_class(
     device: *mut XDevice,
     _type: &mut i32,
     class: &mut XEventClass,
@@ -130,13 +130,12 @@ pub unsafe fn FindTypeAndClass(
     *class = 0;
 
     let mut i: i32 = 0;
-    let mut ip = (*device).classes;
 
     loop {
         if i >= (*device).num_classes {
             break;
         }
-        let mut ip = ip.offset(i as isize);
+        let ip = (*device).classes.offset(i as isize);
         if (*ip).input_class == class_id as u8 {
             *_type = (*ip).event_type_base as i32 + offset;
             *class = (*device).device_id << 8 | *_type as u64;
@@ -145,10 +144,10 @@ pub unsafe fn FindTypeAndClass(
     }
 }
 
-pub unsafe fn DeviceKeyPress(device: *mut XDevice, _type: &mut i32, class: &mut XEventClass) {
-    FindTypeAndClass(device, _type, class, KeyClass, _deviceKeyPress);
+pub unsafe fn device_key_press(device: *mut XDevice, _type: &mut i32, class: &mut XEventClass) {
+    find_type_and_class(device, _type, class, KeyClass, _deviceKeyPress);
 }
 
-pub unsafe fn DeviceKeyRelease(device: *mut XDevice, _type: &mut i32, class: &mut XEventClass) {
-    FindTypeAndClass(device, _type, class, KeyClass, _deviceKeyRelease);
+pub unsafe fn device_key_release(device: *mut XDevice, _type: &mut i32, class: &mut XEventClass) {
+    find_type_and_class(device, _type, class, KeyClass, _deviceKeyRelease);
 }
