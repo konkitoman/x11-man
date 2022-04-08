@@ -6,63 +6,117 @@ use super::types::*;
 
 #[link(name = "X11", kind = "dylib")]
 extern "C" {
-    pub fn XOpenDisplay(display: *const libc::c_char) -> *mut Display;
+    pub fn XOpenDisplay(display: *const i8) -> *mut Display;
     pub fn XCreateSimpleWindow(
         display: *mut Display,
         parent: Window,
-        x: libc::c_int,
-        y: libc::c_int,
-        width: libc::c_uint,
-        height: libc::c_uint,
-        border_width: libc::c_uint,
-        black_pixel: libc::c_ulong,
-        white_pixel: libc::c_ulong,
+        x: i32,
+        y: i32,
+        width: u32,
+        height: u32,
+        border_width: u32,
+        black_pixel: u64,
+        white_pixel: u64,
     ) -> Window;
-    pub fn XRootWindow(display: *mut Display, screen_number: libc::c_int) -> Window;
-    pub fn XSelectInput(display: *mut Display, w: Window, event_mask: libc::c_long) -> libc::c_int;
-    pub fn XMapWindow(display: *mut Display, w: Window) -> libc::c_int;
-    pub fn XNextEvent(display: *mut Display, event: *mut XEvent) -> libc::c_int;
+    pub fn XRootWindow(display: *mut Display, screen_number: i32) -> Window;
+    pub fn XSelectInput(display: *mut Display, w: Window, event_mask: i64) -> i32;
+    pub fn XMapWindow(display: *mut Display, w: Window) -> i32;
+    pub fn XNextEvent(display: *mut Display, event: *mut XEvent) -> i32;
     pub fn XFillRectangle(
         display: *mut Display,
         drawable: Drawable,
         gc: *mut GC,
-        x: libc::c_int,
-        y: libc::c_int,
-        width: libc::c_uint,
-        height: libc::c_uint,
-    ) -> libc::c_int;
+        x: i32,
+        y: i32,
+        width: u32,
+        height: u32,
+    ) -> i32;
     pub fn XDrawString(
         display: *mut Display,
         drawable: Drawable,
         gc: *mut GC,
-        x: libc::c_int,
-        y: libc::c_int,
-        string: *const libc::c_char,
-        length: libc::c_int,
-    ) -> libc::c_int;
-    pub fn XLookupKeysym(key_event: *const XKeyEvent, index: libc::c_int) -> KeySym;
+        x: i32,
+        y: i32,
+        string: *const i8,
+        length: i32,
+    ) -> i32;
+    pub fn XLookupKeysym(key_event: *const XKeyEvent, index: i32) -> KeySym;
     pub fn XLookupString(
         key_event: *const XKeyEvent,
-        buffer_return: *mut libc::c_char,
-        bytes_buffer: libc::c_int,
+        buffer_return: *mut i8,
+        bytes_buffer: i32,
         keysym_return: *mut KeySym,
         status_in_out: *mut XComposeStatus,
-    ) -> libc::c_int;
-    pub fn XStoreName(display: *mut Display, w: Window, window_name: *const libc::c_char);
+    ) -> i32;
+    pub fn XStoreName(display: *mut Display, w: Window, window_name: *const i8);
+    pub fn XGetInputFocus(display: *mut Display, window: *mut Window, revert: *mut i32) -> i32;
+    pub fn XQueryPointer(
+        display: *mut Display,
+        window: Window,
+        root: *mut Window,
+        child: *mut Window,
+        root_x: *mut i32,
+        root_y: *mut i32,
+        child_x: *mut i32,
+        child_y: *mut i32,
+        mask: *mut u32,
+    ) -> bool;
+    /// `keys` - Need to be `[0i8; 32]`
+    pub fn XQueryKeymap(display: *mut Display, keys: *mut i8) -> i32;
+    pub fn XGrabKey(
+        display: *mut Display,
+        keycode: i32,
+        modifiers: u32,
+        grab_window: Window,
+        owner_events: bool,
+        pointer_mode: i32,
+        keyboard_mode: i32,
+    ) -> i32;
+    pub fn XGrabButton(
+        display: *mut Display,
+        button: u32,
+        modifiers: u32,
+        grab_window: Window,
+        owner_events: bool,
+        event_mask: u32,
+        pointer_mode: i32,
+        keyboard_mode: i32,
+        confine_to: Window,
+        cursor: u32,
+    ) -> i32;
+    pub fn XGrabPointer(
+        display: *mut Display,
+        grab_window: Window,
+        owner_events: bool,
+        event_mask: u32,
+        pointer_mode: i32,
+        keyboard_mode: i32,
+        confine_to: Window,
+        curosr: u32,
+        time: Time,
+    ) -> i32;
+    pub fn XGrabKeyboard(
+        display: *mut Display,
+        window: Window,
+        owner_events: bool,
+        pointer_mode: i32,
+        keyboard_mode: i32,
+        time: Time,
+    ) -> i32;
+
 }
 
 #[link(name = "Xi", kind = "dylib")]
 extern "C" {
-    pub fn XListInputDevices(display: *mut Display, ndevices: *mut libc::c_int)
-        -> *mut XDeviceInfo;
+    pub fn XListInputDevices(display: *mut Display, ndevices: *mut i32) -> *mut XDeviceInfo;
     pub fn XOpenDevice(display: *mut Display, device_id: XID) -> *mut XDevice;
-    pub fn XCloseDevice(display: *mut Display, device: *mut XDevice) -> libc::c_int;
+    pub fn XCloseDevice(display: *mut Display, device: *mut XDevice) -> i32;
     pub fn XSelectExtensionEvent(
         display: *mut Display,
         window: Window,
         event_class: *mut XEventClass,
-        count: libc::c_int,
-    ) -> libc::c_int;
+        count: i32,
+    ) -> i32;
 }
 
 pub unsafe fn FindTypeAndClass(
