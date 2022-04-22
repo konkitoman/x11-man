@@ -4,10 +4,7 @@ use std::{
     time::Duration,
 };
 
-use x11_man::{
-    x::GrabMode,
-    xlib::{Event, XDisplay},
-};
+use x11_man::xlib::{Event, XDisplay};
 
 fn main() {
     let mut methods: HashMap<&str, &dyn Func> = HashMap::new();
@@ -50,14 +47,7 @@ impl Func for GrabKey {
         println!("Is grabing key f!");
         let display = XDisplay::new(None);
         let root = display.root_window(display.default_screen());
-        display.grab_key(
-            41, /* means f */
-            0,
-            root,
-            true,
-            GrabMode::Async,
-            GrabMode::Async,
-        );
+        display.grab_key(41 /* means f */, 0, root);
         println!("Key f grabed!");
 
         loop {
@@ -81,7 +71,7 @@ impl Func for KeyboardGrabing {
         println!("Is grabing keyboard!");
         let display = XDisplay::new(None);
         let root = display.root_window(display.default_screen());
-        display.grab_keyboard(root, true, GrabMode::Async, GrabMode::Async, 0);
+        display.grab_keyboard(root);
 
         println!("Keyboard grabed!");
         println!("Press esc to exit!");

@@ -23,6 +23,8 @@ pub struct XDisplay {
     pub _d: *mut xlib::Display,
     pub keyboard_grabmode: GrabMode,
     pub pointer_grabmode: GrabMode,
+    pub owner_events: bool,
+    pub time: u64,
 }
 
 unsafe impl Sync for XDisplay {}
@@ -34,6 +36,8 @@ impl Default for XDisplay {
             _d: std::ptr::null_mut(),
             keyboard_grabmode: GrabMode::Async,
             pointer_grabmode: GrabMode::Async,
+            owner_events: true,
+            time: 0,
         }
     }
 }
@@ -540,24 +544,16 @@ impl XDisplay {
     }
 
     /// grabing key and adding events in event queue
-    pub fn grab_key(
-        &self,
-        keycode: i32,
-        modifiers: u32,
-        grab_window: x::Window,
-        owner_events: bool,
-        pointer_mode: GrabMode,
-        keyboard_mode: GrabMode,
-    ) -> i32 {
+    pub fn grab_key(&self, keycode: i32, modifiers: u32, grab_window: x::Window) -> i32 {
         unsafe {
             xlib::XGrabKey(
                 self._d,
                 keycode,
                 modifiers,
                 grab_window,
-                owner_events as i32,
-                pointer_mode as i32,
-                keyboard_mode as i32,
+                self.owner_events as i32,
+                self.pointer_grabmode as i32,
+                self.keyboard_grabmode as i32,
             )
         }
     }
@@ -568,10 +564,7 @@ impl XDisplay {
         button: u32,
         modifiers: u32,
         grab_window: x::Window,
-        owner_events: bool,
         event_mask: u32,
-        pointer_mode: GrabMode,
-        keyboard_mode: GrabMode,
         confine_to: x::Window,
         cursor: u64,
     ) -> i32 {
@@ -581,10 +574,10 @@ impl XDisplay {
                 button,
                 modifiers,
                 grab_window,
-                owner_events as i32,
+                self.owner_events as i32,
                 event_mask,
-                pointer_mode as i32,
-                keyboard_mode as i32,
+                self.pointer_grabmode as i32,
+                self.keyboard_grabmode as i32,
                 confine_to,
                 cursor,
             )
@@ -595,46 +588,35 @@ impl XDisplay {
     pub fn grab_pointer(
         &self,
         grab_window: x::Window,
-        owner_events: bool,
         event_mask: u32,
-        pointer_mode: GrabMode,
-        keyboard_mode: GrabMode,
         confine_to: x::Window,
         cursor: u64,
-        time: u64,
     ) -> i32 {
         unsafe {
             xlib::XGrabPointer(
                 self._d,
                 grab_window,
-                owner_events as i32,
+                self.owner_events as i32,
                 event_mask,
-                pointer_mode as i32,
-                keyboard_mode as i32,
+                self.pointer_grabmode as i32,
+                self.keyboard_grabmode as i32,
                 confine_to,
                 cursor,
-                time,
+                self.time,
             )
         }
     }
 
     /// grab keyboard and adding events in event queue.
-    pub fn grab_keyboard(
-        &self,
-        grab_window: x::Window,
-        owner_events: bool,
-        pointer_mode: GrabMode,
-        keyboard_mode: GrabMode,
-        time: u64,
-    ) -> i32 {
+    pub fn grab_keyboard(&self, grab_window: x::Window) -> i32 {
         unsafe {
             xlib::XGrabKeyboard(
                 self._d,
                 grab_window,
-                owner_events as i32,
-                pointer_mode as i32,
-                keyboard_mode as i32,
-                time,
+                self.owner_events as i32,
+                self.pointer_grabmode as i32,
+                self.keyboard_grabmode as i32,
+                self.time,
             )
         }
     }
