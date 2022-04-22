@@ -625,7 +625,7 @@ impl XDisplay {
         unsafe { xlib::XUngrabKey(self._d, keycode as i32, modifiers, window) }
     }
 
-    pub fn ungrab_button(&self, button: u32, modifiers: u32, window: x::Window) {
+    pub fn ungrab_button(&self, window: x::Window, button: u32, modifiers: u32) {
         unsafe {
             xlib::XUngrabButton(self._d, button, modifiers, window);
         }
