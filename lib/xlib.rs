@@ -1,9 +1,6 @@
 use std::fmt::{Display, Formatter};
 
-use crate::{
-    ffi::{self},
-    x::GrabMode,
-};
+use super::x::GrabMode;
 
 use super::ffi::{x, xlib};
 
@@ -24,28 +21,53 @@ impl Screen {
 #[derive(Debug, Copy, Clone)]
 pub struct XDisplay {
     pub _d: *mut xlib::Display,
+    pub keyboard_grabmode: GrabMode,
+    pub pointer_grabmode: GrabMode,
 }
 
 unsafe impl Sync for XDisplay {}
 unsafe impl Send for XDisplay {}
 
+impl Default for XDisplay {
+    fn default() -> Self {
+        Self {
+            _d: std::ptr::null_mut(),
+            keyboard_grabmode: GrabMode::Async,
+            pointer_grabmode: GrabMode::Async,
+        }
+    }
+}
+
 impl XDisplay {
-    /// open display
+    /// Open display or X11 session
     pub fn new(number: Option<i8>) -> Self {
         let display = match number {
             Some(number) => unsafe { xlib::XOpenDisplay(&number) },
             None => unsafe { xlib::XOpenDisplay(std::ptr::null()) },
         };
 
-        Self { _d: display }
+        Self {
+            _d: display,
+            ..Default::default()
+        }
     }
 
-    /// get default screen number
+    /// To create from unsafe ffi::xlib::Display
+    ///
+    /// Don't use this only if neseccary
+    pub unsafe fn from_row(row: *mut xlib::Display) -> Self {
+        Self {
+            _d: row,
+            ..Default::default()
+        }
+    }
+
+    /// Get default screen number
     pub fn default_screen(&self) -> i32 {
         unsafe { (*self._d).default_screen }
     }
 
-    /// get screens
+    /// Get screens
     pub fn screens(&self) -> Vec<Screen> {
         let mut data = Vec::new();
         unsafe {
@@ -57,7 +79,7 @@ impl XDisplay {
         data
     }
 
-    /// get screens length
+    /// Get screens length
     pub fn screens_len(&self) -> i32 {
         unsafe { (*self._d).nscreens }
     }
@@ -66,20 +88,24 @@ impl XDisplay {
         self.screens()[self.default_screen() as usize].clone()
     }
 
+    /// Get root window or main window
     pub fn root_window(&self, screen_number: i32) -> x::Window {
         unsafe { xlib::XRootWindow(self._d, screen_number) }
     }
 
+    /// Select events mask from window
     pub fn select_input(&self, window: x::Window, mask: i64) -> i32 {
         unsafe { xlib::XSelectInput(self._d, window, mask) }
     }
 
+    /// Set window title
     pub fn store_name(&self, window: x::Window, name: &str) {
         unsafe {
             xlib::XStoreName(self._d, window, name.as_ptr() as *const i8);
         }
     }
 
+    /// Get focused window
     pub fn get_input_focus(&self) -> (x::Window, i32) {
         let mut window = 0;
         let mut revert = 0;
@@ -89,6 +115,7 @@ impl XDisplay {
         (window, revert)
     }
 
+    /// Get event from queue
     pub fn next_event(&self) -> Event {
         let mut event = xlib::XEvent { _type: 0 };
 
@@ -96,12 +123,10 @@ impl XDisplay {
             xlib::XNextEvent(self._d, &mut event);
 
             match event._type {
-                ffi::x::KeyPress => Event::KeyPress(KeyEvent {
+                x::KeyPress => Event::KeyPress(KeyEvent {
                     serial: event.xkey.serial,
                     send_event: event.xkey.send_event > 0,
-                    display: XDisplay {
-                        _d: event.xkey.display,
-                    },
+                    display: XDisplay::from_row(event.xkey.display),
                     window: event.xkey.window,
                     root: event.xkey.root,
                     subwindow: event.xkey.subwindow,
@@ -113,12 +138,10 @@ impl XDisplay {
                     keycode: Keycode(event.xkey.keycode),
                     same_screen: event.xkey.same_screen > 0,
                 }),
-                ffi::x::KeyRelease => Event::KeyRelease(KeyEvent {
+                x::KeyRelease => Event::KeyRelease(KeyEvent {
                     serial: event.xkey.serial,
                     send_event: event.xkey.send_event > 0,
-                    display: XDisplay {
-                        _d: event.xkey.display,
-                    },
+                    display: XDisplay::from_row(event.xkey.display),
                     window: event.xkey.window,
                     root: event.xkey.root,
                     subwindow: event.xkey.subwindow,
@@ -130,12 +153,10 @@ impl XDisplay {
                     keycode: Keycode(event.xkey.keycode),
                     same_screen: event.xkey.same_screen > 0,
                 }),
-                ffi::x::ButtonPress => Event::ButtonPress(ButtonEvent {
+                x::ButtonPress => Event::ButtonPress(ButtonEvent {
                     serial: event.xbutton.serial,
                     send_event: event.xbutton.send_event > 0,
-                    display: XDisplay {
-                        _d: event.xbutton.display,
-                    },
+                    display: XDisplay::from_row(event.xbutton.display),
                     window: event.xbutton.window,
                     root: event.xbutton.root,
                     subwindow: event.xbutton.subwindow,
@@ -148,12 +169,10 @@ impl XDisplay {
                     button: event.xbutton.button,
                     same_screen: event.xbutton.same_screen > 0,
                 }),
-                ffi::x::ButtonRelease => Event::ButtonRelease(ButtonEvent {
+                x::ButtonRelease => Event::ButtonRelease(ButtonEvent {
                     serial: event.xbutton.serial,
                     send_event: event.xbutton.send_event > 0,
-                    display: XDisplay {
-                        _d: event.xbutton.display,
-                    },
+                    display: XDisplay::from_row(event.xbutton.display),
                     window: event.xbutton.window,
                     root: event.xbutton.root,
                     subwindow: event.xbutton.subwindow,
@@ -166,12 +185,10 @@ impl XDisplay {
                     button: event.xbutton.button,
                     same_screen: event.xbutton.same_screen > 0,
                 }),
-                ffi::x::MotionNotify => Event::MotionNotify(MotionEvent {
+                x::MotionNotify => Event::MotionNotify(MotionEvent {
                     serial: event.xmotion.serial,
                     send_event: event.xmotion.send_event > 0,
-                    display: XDisplay {
-                        _d: event.xmotion.display,
-                    },
+                    display: XDisplay::from_row(event.xmotion.display),
                     window: event.xmotion.window,
                     root: event.xmotion.root,
                     subwindow: event.xmotion.subwindow,
@@ -184,12 +201,10 @@ impl XDisplay {
                     state: event.xmotion.state,
                     same_screen: event.xmotion.same_screen > 0,
                 }),
-                ffi::x::EnterNotify => Event::EnterNotify(CrossingEvent {
+                x::EnterNotify => Event::EnterNotify(CrossingEvent {
                     serial: event.xcrossing.serial,
                     send_event: event.xcrossing.send_event > 0,
-                    display: XDisplay {
-                        _d: event.xcrossing.display,
-                    },
+                    display: XDisplay::from_row(event.xcrossing.display),
                     window: event.xcrossing.window,
                     root: event.xcrossing.root,
                     subwindow: event.xcrossing.subwindow,
@@ -204,12 +219,10 @@ impl XDisplay {
                     focus: event.xcrossing.focus > 0,
                     state: event.xcrossing.state,
                 }),
-                ffi::x::LeaveNotify => Event::LeaveNotify(CrossingEvent {
+                x::LeaveNotify => Event::LeaveNotify(CrossingEvent {
                     serial: event.xcrossing.serial,
                     send_event: event.xcrossing.send_event > 0,
-                    display: XDisplay {
-                        _d: event.xcrossing.display,
-                    },
+                    display: XDisplay::from_row(event.xcrossing.display),
                     window: event.xcrossing.window,
                     root: event.xcrossing.root,
                     subwindow: event.xcrossing.subwindow,
@@ -224,41 +237,33 @@ impl XDisplay {
                     focus: event.xcrossing.focus > 0,
                     state: event.xcrossing.state,
                 }),
-                ffi::x::FocusIn => Event::FocusIn(FocusEvent {
+                x::FocusIn => Event::FocusIn(FocusEvent {
                     serial: event.xfocus.serial,
                     send_event: event.xfocus.send_event > 0,
-                    display: XDisplay {
-                        _d: event.xfocus.display,
-                    },
+                    display: XDisplay::from_row(event.xfocus.display),
                     window: event.xfocus.window,
                     mode: event.xfocus.mode,
                     detail: event.xfocus.detail,
                 }),
-                ffi::x::FocusOut => Event::FocusOut(FocusEvent {
+                x::FocusOut => Event::FocusOut(FocusEvent {
                     serial: event.xfocus.serial,
                     send_event: event.xfocus.send_event > 0,
-                    display: XDisplay {
-                        _d: event.xfocus.display,
-                    },
+                    display: XDisplay::from_row(event.xfocus.display),
                     window: event.xfocus.window,
                     mode: event.xfocus.mode,
                     detail: event.xfocus.detail,
                 }),
-                ffi::x::KeymapNotify => Event::KeymapNotify(KeymapEvent {
+                x::KeymapNotify => Event::KeymapNotify(KeymapEvent {
                     serial: event.xkeymap.serial,
                     send_event: event.xkeymap.send_event > 0,
-                    display: XDisplay {
-                        _d: event.xkeymap.display,
-                    },
+                    display: XDisplay::from_row(event.xkeymap.display),
                     window: event.xkeymap.window,
                     key_vector: event.xkeymap.key_vector,
                 }),
-                ffi::x::Expose => Event::Expose(ExposeEvent {
+                x::Expose => Event::Expose(ExposeEvent {
                     serial: event.xexpose.serial,
                     send_event: event.xexpose.send_event > 0,
-                    display: XDisplay {
-                        _d: event.xexpose.display,
-                    },
+                    display: XDisplay::from_row(event.xexpose.display),
                     window: event.xexpose.window,
                     x: event.xexpose.x,
                     y: event.xexpose.y,
@@ -266,12 +271,10 @@ impl XDisplay {
                     height: event.xexpose.height as u32,
                     count: event.xexpose.count as u32,
                 }),
-                ffi::x::GraphicsExpose => Event::GraphicsExpose(GraphicsExposeEvent {
+                x::GraphicsExpose => Event::GraphicsExpose(GraphicsExposeEvent {
                     serial: event.xgraphicsexpose.serial,
                     send_event: event.xgraphicsexpose.send_event > 0,
-                    display: XDisplay {
-                        _d: event.xgraphicsexpose.display,
-                    },
+                    display: XDisplay::from_row(event.xgraphicsexpose.display),
                     drawable: event.xgraphicsexpose.drawable,
                     x: event.xgraphicsexpose.x,
                     y: event.xgraphicsexpose.y,
@@ -281,31 +284,25 @@ impl XDisplay {
                     major_code: event.xgraphicsexpose.major_code,
                     minor_code: event.xgraphicsexpose.minor_code,
                 }),
-                ffi::x::NoExpose => Event::NoExpose(NoExposeEvent {
+                x::NoExpose => Event::NoExpose(NoExposeEvent {
                     serial: event.xnoexpose.serial,
                     send_event: event.xnoexpose.send_event > 0,
-                    display: XDisplay {
-                        _d: event.xnoexpose.display,
-                    },
+                    display: XDisplay::from_row(event.xnoexpose.display),
                     drawable: event.xnoexpose.drawable,
                     major_code: event.xnoexpose.major_code,
                     minor_code: event.xnoexpose.minor_code,
                 }),
-                ffi::x::VisibilityNotify => Event::VisibilityNotify(VisibilityEvent {
+                x::VisibilityNotify => Event::VisibilityNotify(VisibilityEvent {
                     serial: event.xvisibility.serial,
                     send_event: event.xvisibility.send_event > 0,
-                    display: XDisplay {
-                        _d: event.xvisibility.display,
-                    },
+                    display: XDisplay::from_row(event.xvisibility.display),
                     window: event.xvisibility.window,
                     state: event.xvisibility.state,
                 }),
-                ffi::x::CreateNotify => Event::CreateNotify(CreateWindowEvent {
+                x::CreateNotify => Event::CreateNotify(CreateWindowEvent {
                     serial: event.xcreatewindow.serial,
                     send_event: event.xcreatewindow.send_event > 0,
-                    display: XDisplay {
-                        _d: event.xcreatewindow.display,
-                    },
+                    display: XDisplay::from_row(event.xcreatewindow.display),
                     parent: event.xcreatewindow.parent,
                     window: event.xcreatewindow.window,
                     x: event.xcreatewindow.x,
@@ -315,50 +312,40 @@ impl XDisplay {
                     border_width: event.xcreatewindow.border_width as u32,
                     override_redirect: event.xcreatewindow.override_redirect > 0,
                 }),
-                ffi::x::DestroyNotify => Event::DestroyNotify(DestroyWindowEvent {
+                x::DestroyNotify => Event::DestroyNotify(DestroyWindowEvent {
                     serial: event.xdestroywindow.serial,
                     send_event: event.xdestroywindow.send_event > 0,
-                    display: XDisplay {
-                        _d: event.xdestroywindow.display,
-                    },
+                    display: XDisplay::from_row(event.xdestroywindow.display),
                     event: event.xdestroywindow.event,
                     window: event.xdestroywindow.window,
                 }),
-                ffi::x::UnmapNotify => Event::UnmapNotify(UnmapEvent {
+                x::UnmapNotify => Event::UnmapNotify(UnmapEvent {
                     serial: event.xunmap.serial,
                     send_event: event.xunmap.send_event > 0,
-                    display: XDisplay {
-                        _d: event.xunmap.display,
-                    },
+                    display: XDisplay::from_row(event.xunmap.display),
                     event: event.xunmap.event,
                     window: event.xunmap.window,
                     from_configure: event.xunmap.from_configure > 0,
                 }),
-                ffi::x::MapNotify => Event::MapNotify(MapEvent {
+                x::MapNotify => Event::MapNotify(MapEvent {
                     serial: event.xmap.serial,
                     send_event: event.xmap.send_event > 0,
-                    display: XDisplay {
-                        _d: event.xmap.display,
-                    },
+                    display: XDisplay::from_row(event.xmap.display),
                     event: event.xmap.event,
                     window: event.xmap.window,
                     override_redirect: event.xmap.override_redirect > 0,
                 }),
-                ffi::x::MapRequest => Event::MapRequest(MapRequestEvent {
+                x::MapRequest => Event::MapRequest(MapRequestEvent {
                     serial: event.xmaprequest.serial,
                     send_event: event.xmaprequest.send_event > 0,
-                    display: XDisplay {
-                        _d: event.xmaprequest.display,
-                    },
+                    display: XDisplay::from_row(event.xmaprequest.display),
                     parent: event.xmaprequest.parent,
                     window: event.xmaprequest.window,
                 }),
-                ffi::x::ReparentNotify => Event::ReparentNotify(ReparentEvent {
+                x::ReparentNotify => Event::ReparentNotify(ReparentEvent {
                     serial: event.xreparent.serial,
                     send_event: event.xreparent.send_event > 0,
-                    display: XDisplay {
-                        _d: event.xreparent.display,
-                    },
+                    display: XDisplay::from_row(event.xreparent.display),
                     event: event.xreparent.event,
                     window: event.xreparent.window,
                     parent: event.xreparent.parent,
@@ -366,12 +353,10 @@ impl XDisplay {
                     y: event.xreparent.y,
                     override_redirect: event.xreparent.override_redirect > 0,
                 }),
-                ffi::x::ConfigureNotify => Event::ConfigureNotify(ConfigureEvent {
+                x::ConfigureNotify => Event::ConfigureNotify(ConfigureEvent {
                     serial: event.xconfigure.serial,
                     send_event: event.xconfigure.send_event > 0,
-                    display: XDisplay {
-                        _d: event.xconfigure.display,
-                    },
+                    display: XDisplay::from_row(event.xconfigure.display),
                     event: event.xconfigure.event,
                     window: event.xconfigure.window,
                     x: event.xconfigure.x,
@@ -382,12 +367,10 @@ impl XDisplay {
                     above: event.xconfigure.above,
                     override_redirect: event.xconfigure.override_redirect > 0,
                 }),
-                ffi::x::ConfigureRequest => Event::ConfigureRequest(ConfigureRequestEvent {
+                x::ConfigureRequest => Event::ConfigureRequest(ConfigureRequestEvent {
                     serial: event.xconfigurerequest.serial,
                     send_event: event.xconfigurerequest.send_event > 0,
-                    display: XDisplay {
-                        _d: event.xconfigurerequest.display,
-                    },
+                    display: XDisplay::from_row(event.xconfigurerequest.display),
                     parent: event.xconfigurerequest.parent,
                     window: event.xconfigurerequest.window,
                     x: event.xconfigurerequest.x,
@@ -399,74 +382,60 @@ impl XDisplay {
                     detail: event.xconfigurerequest.detail,
                     value_mask: event.xconfigurerequest.value_mask,
                 }),
-                ffi::x::GravityNotify => Event::GravityNotify(GravityEvent {
+                x::GravityNotify => Event::GravityNotify(GravityEvent {
                     serial: event.xgravity.serial,
                     send_event: event.xgravity.send_event > 0,
-                    display: XDisplay {
-                        _d: event.xgravity.display,
-                    },
+                    display: XDisplay::from_row(event.xgravity.display),
                     event: event.xgravity.event,
                     window: event.xgravity.window,
                     x: event.xgravity.x,
                     y: event.xgravity.y,
                 }),
-                ffi::x::ResizeRequest => Event::ResizeRequest(ResizeRequestEvent {
+                x::ResizeRequest => Event::ResizeRequest(ResizeRequestEvent {
                     serial: event.xresizerequest.serial,
                     send_event: event.xresizerequest.send_event > 0,
-                    display: XDisplay {
-                        _d: event.xresizerequest.display,
-                    },
+                    display: XDisplay::from_row(event.xresizerequest.display),
                     window: event.xresizerequest.window,
                     width: event.xresizerequest.width as u32,
                     height: event.xresizerequest.height as u32,
                 }),
-                ffi::x::CirculateNotify => Event::CirculateNotify(CirculateEvent {
+                x::CirculateNotify => Event::CirculateNotify(CirculateEvent {
                     serial: event.xcirculate.serial,
                     send_event: event.xcirculate.send_event > 0,
-                    display: XDisplay {
-                        _d: event.xcirculate.display,
-                    },
+                    display: XDisplay::from_row(event.xcirculate.display),
                     event: event.xcirculate.event,
                     window: event.xcirculate.window,
                     place: event.xcirculate.place,
                 }),
-                ffi::x::CirculateRequest => Event::CirculateRequest(CirculateRequestEvent {
+                x::CirculateRequest => Event::CirculateRequest(CirculateRequestEvent {
                     serial: event.xcirculaterequest.serial,
                     send_event: event.xcirculaterequest.send_event > 0,
-                    display: XDisplay {
-                        _d: event.xcirculaterequest.display,
-                    },
+                    display: XDisplay::from_row(event.xcirculaterequest.display),
                     parent: event.xcirculaterequest.parent,
                     window: event.xcirculaterequest.window,
                     place: event.xcirculaterequest.place,
                 }),
-                ffi::x::PropertyNotify => Event::PropertyNotify(PropertyEvent {
+                x::PropertyNotify => Event::PropertyNotify(PropertyEvent {
                     serial: event.xproperty.serial,
                     send_event: event.xproperty.send_event > 0,
-                    display: XDisplay {
-                        _d: event.xproperty.display,
-                    },
+                    display: XDisplay::from_row(event.xproperty.display),
                     window: event.xproperty.window,
                     atom: event.xproperty.atom,
                     time: event.xproperty.time,
                     state: event.xproperty.state,
                 }),
-                ffi::x::SelectionClear => Event::SelectionClear(SelectionClearEvent {
+                x::SelectionClear => Event::SelectionClear(SelectionClearEvent {
                     serial: event.xselectionclear.serial,
                     send_event: event.xselectionclear.send_event > 0,
-                    display: XDisplay {
-                        _d: event.xselectionclear.display,
-                    },
+                    display: XDisplay::from_row(event.xselectionclear.display),
                     window: event.xselectionclear.window,
                     selection: event.xselectionclear.selection,
                     time: event.xselectionclear.time,
                 }),
-                ffi::x::SelectionRequest => Event::SelectionRequest(SelectionRequestEvent {
+                x::SelectionRequest => Event::SelectionRequest(SelectionRequestEvent {
                     serial: event.xselectionrequest.serial,
                     send_event: event.xselectionrequest.send_event > 0,
-                    display: XDisplay {
-                        _d: event.xselectionrequest.display,
-                    },
+                    display: XDisplay::from_row(event.xselectionrequest.display),
                     owner: event.xselectionrequest.owner,
                     requestor: event.xselectionrequest.requestor,
                     selection: event.xselectionrequest.selection,
@@ -474,67 +443,58 @@ impl XDisplay {
                     property: event.xselectionrequest.property,
                     time: event.xselectionrequest.time,
                 }),
-                ffi::x::SelectionNotify => Event::SelectionNotify(SelectionEvent {
+                x::SelectionNotify => Event::SelectionNotify(SelectionEvent {
                     serial: event.xselection.serial,
                     send_event: event.xselection.send_event > 0,
-                    display: XDisplay {
-                        _d: event.xselection.display,
-                    },
+                    display: XDisplay::from_row(event.xselection.display),
                     requestor: event.xselection.requestor,
                     selection: event.xselection.selection,
                     target: event.xselection.target,
                     property: event.xselection.property,
                     time: event.xselection.time,
                 }),
-                ffi::x::ColormapNotify => Event::ColormapNotify(ColormapEvent {
+                x::ColormapNotify => Event::ColormapNotify(ColormapEvent {
                     serial: event.xcolormap.serial,
                     send_event: event.xcolormap.send_event > 0,
-                    display: XDisplay {
-                        _d: event.xcolormap.display,
-                    },
+                    display: XDisplay::from_row(event.xcolormap.display),
                     window: event.xcolormap.window,
                     colormap: event.xcolormap.colormap,
                     c_new: event.xcolormap.new > 0,
                     state: event.xcolormap.state,
                 }),
-                ffi::x::ClientMessage => Event::ClientMessage(ClientMessageEvent {
+                x::ClientMessage => Event::ClientMessage(ClientMessageEvent {
                     serial: event.xclient.serial,
                     send_event: event.xclient.send_event > 0,
-                    display: XDisplay {
-                        _d: event.xclient.display,
-                    },
+                    display: XDisplay::from_row(event.xclient.display),
                     window: event.xclient.window,
                     message_type: event.xclient.message_type,
                     format: event.xclient.format,
                     data: event.xclient.data.b,
                 }),
-                ffi::x::MappingNotify => Event::MappingNotify(MappingNotifyEvent {
+                x::MappingNotify => Event::MappingNotify(MappingNotifyEvent {
                     serial: event.xmapping.serial,
                     send_event: event.xmapping.send_event > 0,
-                    display: XDisplay {
-                        _d: event.xmapping.display,
-                    },
+                    display: XDisplay::from_row(event.xmapping.display),
                     window: event.xmapping.window,
                     request: event.xmapping.request,
                     first_keycode: event.xmapping.first_keycode,
                     count: event.xmapping.count,
                 }),
-                ffi::x::GenericEvent => Event::GenericEvent(GenericEvent {
+                x::GenericEvent => Event::GenericEvent(GenericEvent {
                     serial: event.xgeneric.serial,
                     send_event: event.xgeneric.send_event > 0,
-                    display: XDisplay {
-                        _d: event.xgeneric.display,
-                    },
+                    display: XDisplay::from_row(event.xgeneric.display),
                     extension: event.xgeneric.extension,
                     evtype: event.xgeneric.evtype,
                 }),
-                ffi::x::LASTEvent => Event::LASTEvent,
+                x::LASTEvent => Event::LASTEvent,
 
                 _ => Event::Unknown,
             }
         }
     }
 
+    /// Returns the mouse position and button state.
     pub fn quary_pointer(&self, window: x::Window) -> QuaryPointer {
         let mut root = 0;
         let mut child = 0;
@@ -570,6 +530,7 @@ impl XDisplay {
         }
     }
 
+    /// Return all pressed keys
     pub fn quary_keymap(&self) -> QuaryKeymap {
         let mut keys = [0u8; 32];
 
@@ -578,6 +539,7 @@ impl XDisplay {
         QuaryKeymap { keys }
     }
 
+    /// grabing key and adding events in event queue
     pub fn grab_key(
         &self,
         keycode: i32,
@@ -600,6 +562,7 @@ impl XDisplay {
         }
     }
 
+    /// grabing mouse button and adding events in event queue for button and position.
     pub fn grab_button(
         &self,
         button: u32,
@@ -628,6 +591,7 @@ impl XDisplay {
         }
     }
 
+    /// grab the mouse and adding events in event queue for buttons and position.
     pub fn grab_pointer(
         &self,
         grab_window: x::Window,
@@ -654,6 +618,7 @@ impl XDisplay {
         }
     }
 
+    /// grab keyboard and adding events in event queue.
     pub fn grab_keyboard(
         &self,
         grab_window: x::Window,

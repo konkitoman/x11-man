@@ -1,8 +1,10 @@
+#[derive(Debug, Copy, Clone)]
 pub enum GrabMode {
-    GrabModeSync = 0,
-    GrabModeAsync = 1,
+    Sync = 0,
+    Async = 1,
 }
 
+#[derive(Debug, Copy, Clone)]
 pub enum GrabError {
     AlreadyGrabbed = 1,
     InvalidTime = 2,
@@ -10,6 +12,7 @@ pub enum GrabError {
     Frozen = 4,
 }
 
+#[derive(Debug, Copy, Clone)]
 pub enum AllowEvents {
     AsyncPointer = 0,
     SyncPointer = 1,
@@ -21,12 +24,14 @@ pub enum AllowEvents {
     SyncBoth = 7,
 }
 
+#[derive(Debug, Copy, Clone)]
 pub enum Revert {
     ToNone = 0,
     ToPointerRoot = 6 as isize,
     ToParent = 2,
 }
 
+#[derive(Debug, Copy, Clone)]
 pub enum Errors {
     Success = 0,
     BadRequest = 1,

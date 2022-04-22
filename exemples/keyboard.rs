@@ -55,8 +55,8 @@ impl Func for GrabKey {
             0,
             root,
             true,
-            GrabMode::GrabModeAsync,
-            GrabMode::GrabModeAsync,
+            GrabMode::Async,
+            GrabMode::Async,
         );
         println!("Key f grabed!");
 
@@ -81,13 +81,7 @@ impl Func for KeyboardGrabing {
         println!("Is grabing keyboard!");
         let display = XDisplay::new(None);
         let root = display.root_window(display.default_screen());
-        display.grab_keyboard(
-            root,
-            true,
-            GrabMode::GrabModeAsync,
-            GrabMode::GrabModeAsync,
-            0,
-        );
+        display.grab_keyboard(root, true, GrabMode::Async, GrabMode::Async, 0);
 
         println!("Keyboard grabed!");
         println!("Press esc to exit!");
