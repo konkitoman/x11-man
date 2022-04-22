@@ -620,6 +620,28 @@ impl XDisplay {
             )
         }
     }
+
+    pub fn ungrap_key(&self, window: x::Window, keycode: u32, modifiers: u32) -> i32 {
+        unsafe { xlib::XUngrabKey(self._d, keycode as i32, modifiers, window) }
+    }
+
+    pub fn ungrab_button(&self, button: u32, modifiers: u32, window: x::Window) {
+        unsafe {
+            xlib::XUngrabButton(self._d, button, modifiers, window);
+        }
+    }
+
+    pub fn ungrab_pointer(&self) {
+        unsafe {
+            xlib::XUngrabPointer(self._d, self.time);
+        }
+    }
+
+    pub fn ungrab_keyboard(&self) {
+        unsafe {
+            xlib::XUngrabKeyboard(self._d, self.time);
+        }
+    }
 }
 
 pub struct QuaryPointer {
