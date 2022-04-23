@@ -2,7 +2,7 @@
 name = "x11_man"
 version = "0.0.2"
 edition = "2021"
-author = "konkitoman"
+authors = ["konkitoman"]
 
 [lib]
 name = "x11_man"
