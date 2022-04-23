@@ -13,7 +13,211 @@ pub const QueuedAlready: i32 = 0;
 pub const QueuedAfterReading: i32 = 1;
 pub const QueuedAfterFlush: i32 = 2;
 
-// Todo: Copy from X11/Xlib.h 91 - 144
+pub unsafe fn ConnectionNumber(display: *mut Display) -> i32 {
+    (*display).fd
+}
+
+pub unsafe fn RootWindow(display: *mut Display, screen_number: i32) -> Window {
+    (*ScreenOfDisplay(display, screen_number)).root
+}
+
+pub unsafe fn DefaultScreen(display: *mut Display) -> i32 {
+    (*display).default_screen
+}
+
+pub unsafe fn DefaultRootWindow(display: *mut Display) -> Window {
+    RootWindow(display, DefaultScreen(display))
+}
+
+pub unsafe fn DefaultVisual(display: *mut Display, screen_number: i32) -> *mut Visual {
+    (*ScreenOfDisplay(display, screen_number)).root_visual
+}
+
+pub unsafe fn DefaultGC(display: *mut Display, screen_number: i32) -> GC {
+    (*ScreenOfDisplay(display, screen_number)).default_gc
+}
+
+pub unsafe fn BlackPixel(display: *mut Display, screen_number: i32) -> u64 {
+    (*ScreenOfDisplay(display, screen_number)).black_pixel
+}
+
+pub unsafe fn WhitePixel(display: *mut Display, screen_number: i32) -> u64 {
+    (*ScreenOfDisplay(display, screen_number)).white_pixel
+}
+
+pub const AllPlanes: u64 = 0xFFFFFFFFFFFFFFFF;
+
+pub unsafe fn QLength(display: *mut Display) -> i32 {
+    (*display).qlen
+}
+
+pub unsafe fn DisplayWidth(display: *mut Display, screen_number: i32) -> i32 {
+    (*ScreenOfDisplay(display, screen_number)).width
+}
+
+pub unsafe fn DisplayHeight(display: *mut Display, screen_number: i32) -> i32 {
+    (*ScreenOfDisplay(display, screen_number)).height
+}
+
+pub unsafe fn DisplayWidthMM(display: *mut Display, screen_number: i32) -> i32 {
+    (*ScreenOfDisplay(display, screen_number)).mwidth
+}
+
+pub unsafe fn DisplayHeightMM(display: *mut Display, screen_number: i32) -> i32 {
+    (*ScreenOfDisplay(display, screen_number)).mheight
+}
+
+pub unsafe fn DisplayPlanes(display: *mut Display, screen_number: i32) -> i32 {
+    (*ScreenOfDisplay(display, screen_number)).root_depth
+}
+
+pub unsafe fn DisplayCells(display: *mut Display, screen_number: i32) -> i32 {
+    (*DefaultVisual(display, screen_number)).map_entries
+}
+
+pub unsafe fn ScreenCount(display: *mut Display) -> i32 {
+    (*display).nscreens
+}
+
+pub unsafe fn ServerVendor(display: *mut Display) -> *mut i8 {
+    (*display).vendor
+}
+
+pub unsafe fn ProtocolVersion(display: *mut Display) -> i32 {
+    (*display).proto_major_version
+}
+
+pub unsafe fn ProtocolRevision(display: *mut Display) -> i32 {
+    (*display).proto_minor_version
+}
+
+pub unsafe fn VendorRelease(display: *mut Display) -> i32 {
+    (*display).release
+}
+
+pub unsafe fn DisplayString(display: *mut Display) -> *mut i8 {
+    (*display).display_name
+}
+
+pub unsafe fn DefaultDepth(display: *mut Display, screen_number: i32) -> i32 {
+    (*ScreenOfDisplay(display, screen_number)).root_depth
+}
+
+pub unsafe fn DefaultColormap(display: *mut Display, screen_number: i32) -> Colormap {
+    (*ScreenOfDisplay(display, screen_number)).cmap
+}
+
+pub unsafe fn BitmapUnit(display: *mut Display) -> i32 {
+    (*display).bitmap_unit
+}
+
+pub unsafe fn BitmapBitOrder(display: *mut Display) -> i32 {
+    (*display).bitmap_bit_order
+}
+
+pub unsafe fn BitmapPad(display: *mut Display) -> i32 {
+    (*display).bitmap_pad
+}
+
+pub unsafe fn ImageByteOrder(display: *mut Display) -> i32 {
+    (*display).byte_order
+}
+
+pub unsafe fn NextRequest(display: *mut Display) -> u64 {
+    (*display).request + 1
+}
+
+pub unsafe fn LastKnownRequestProcessed(display: *mut Display) -> u64 {
+    (*display).last_request_read
+}
+
+pub unsafe fn ScreenOfDisplay(display: *mut Display, screen_number: i32) -> *mut Screen {
+    if (*display).nscreens > screen_number {
+        (*display).screens.offset(screen_number as isize)
+    } else {
+        std::ptr::null_mut()
+    }
+}
+
+pub unsafe fn DefaultScreenOfDisplay(display: *mut Display) -> *mut Screen {
+    ScreenOfDisplay(display, DefaultScreen(display))
+}
+
+pub unsafe fn DisplayOfScreen(screen: *mut Screen) -> *mut Display {
+    (*screen).display
+}
+
+pub unsafe fn RootWindowOfScreen(screen: *mut Screen) -> Window {
+    (*screen).root
+}
+
+pub unsafe fn BlackPixelOfScreen(screen: *mut Screen) -> u64 {
+    (*screen).black_pixel
+}
+
+pub unsafe fn WhitePixelOfScreen(screen: *mut Screen) -> u64 {
+    (*screen).white_pixel
+}
+
+pub unsafe fn DefaultColormapOfScreen(screen: *mut Screen) -> Colormap {
+    (*screen).cmap
+}
+
+pub unsafe fn DefaultDepthOfScreen(screen: *mut Screen) -> i32 {
+    (*screen).root_depth
+}
+
+pub unsafe fn DefaultGCOfScreen(screen: *mut Screen) -> GC {
+    (*screen).default_gc
+}
+
+pub unsafe fn DefaultVisualOfScreen(screen: *mut Screen) -> *mut Visual {
+    (*screen).root_visual
+}
+
+pub unsafe fn WidthOfScreen(screen: *mut Screen) -> i32 {
+    (*screen).width
+}
+
+pub unsafe fn HeightOfScreen(screen: *mut Screen) -> i32 {
+    (*screen).height
+}
+
+pub unsafe fn WidthMMOfScreen(screen: *mut Screen) -> i32 {
+    (*screen).mwidth
+}
+
+pub unsafe fn HeightMMOfScreen(screen: *mut Screen) -> i32 {
+    (*screen).mheight
+}
+
+pub unsafe fn PlanesOfScreen(screen: *mut Screen) -> i32 {
+    (*screen).root_depth
+}
+
+pub unsafe fn CellsOfScreen(screen: *mut Screen) -> i32 {
+    (*DefaultVisualOfScreen(screen)).map_entries
+}
+
+pub unsafe fn MinCmapsOfScreen(screen: *mut Screen) -> i32 {
+    (*screen).min_maps
+}
+
+pub unsafe fn MaxCmapsOfScreen(screen: *mut Screen) -> i32 {
+    (*screen).max_maps
+}
+
+pub unsafe fn DoesSaveUnders(screen: *mut Screen) -> i32 {
+    (*screen).save_unders
+}
+
+pub unsafe fn DoesBackingStore(screen: *mut Screen) -> i32 {
+    (*screen).backing_store
+}
+
+pub unsafe fn EventMaskOfScreen(screen: *mut Screen) -> i64 {
+    (*screen).root_input_mask
+}
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -81,22 +285,22 @@ pub type GC = *mut _XGC;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct Visual {
-    ext_data: *mut XExtData,
-    visualid: VisualID,
-    class: i32,
-    red_mask: u64,
-    green_mask: u64,
-    blue_mask: u64,
-    bits_per_rgb: i32,
-    map_entries: i32,
+    pub ext_data: *mut XExtData,
+    pub visualid: VisualID,
+    pub class: i32,
+    pub red_mask: u64,
+    pub green_mask: u64,
+    pub blue_mask: u64,
+    pub bits_per_rgb: i32,
+    pub map_entries: i32,
 }
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct Depth {
-    depth: i32,
-    nvisuals: i32,
-    visuals: *mut Visual,
+    pub depth: i32,
+    pub nvisuals: i32,
+    pub visuals: *mut Visual,
 }
 
 //pub struct _XDisplay;
@@ -104,26 +308,26 @@ pub struct Depth {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct Screen {
-    ext_data: *mut XExtData,
-    display: *mut Display,
-    root: Window,
-    width: i32,
-    height: i32,
-    mwidth: i32,
-    mheight: i32,
-    ndepths: i32,
-    depths: *mut Depth,
-    root_depth: i32,
-    root_visual: *mut Visual,
-    default_gc: GC,
-    cmap: Colormap,
-    white_pixel: u64,
-    black_pixel: u64,
-    max_maps: i32,
-    min_maps: i32,
-    backing_store: i32,
-    save_unders: Bool,
-    root_input_mask: i64,
+    pub ext_data: *mut XExtData,
+    pub display: *mut Display,
+    pub root: Window,
+    pub width: i32,
+    pub height: i32,
+    pub mwidth: i32,
+    pub mheight: i32,
+    pub ndepths: i32,
+    pub depths: *mut Depth,
+    pub root_depth: i32,
+    pub root_visual: *mut Visual,
+    pub default_gc: GC,
+    pub cmap: Colormap,
+    pub white_pixel: u64,
+    pub black_pixel: u64,
+    pub max_maps: i32,
+    pub min_maps: i32,
+    pub backing_store: i32,
+    pub save_unders: Bool,
+    pub root_input_mask: i64,
 }
 
 #[repr(C)]
@@ -219,7 +423,7 @@ pub struct XImage {
     pub green_mask: u64,
     pub blue_mask: u64,
     pub obdata: XPointer,
-    create_image: *mut extern "C" fn(
+    pub create_image: *mut extern "C" fn(
         display: *mut Display,
         visual: *mut Visual,
         depth: i32,
@@ -229,11 +433,11 @@ pub struct XImage {
         bitmap_pad: i32,
         bytes_per_line: i32,
     ) -> *mut XImage,
-    destroy_image: *mut extern "C" fn(*mut XImage) -> i32,
-    get_pixel: *mut extern "C" fn(*mut XImage, i32, i32) -> u64,
-    put_pixel: *mut extern "C" fn(*mut XImage, i32, i32, u64) -> i32,
-    sub_image: *mut extern "C" fn(*mut XImage, i32, i32, u32, u32) -> *mut XImage,
-    add_pixel: *mut extern "C" fn(*mut XImage, i64) -> i32,
+    pub destroy_image: *mut extern "C" fn(*mut XImage) -> i32,
+    pub get_pixel: *mut extern "C" fn(*mut XImage, i32, i32) -> u64,
+    pub put_pixel: *mut extern "C" fn(*mut XImage, i32, i32, u64) -> i32,
+    pub sub_image: *mut extern "C" fn(*mut XImage, i32, i32, u32, u32) -> *mut XImage,
+    pub add_pixel: *mut extern "C" fn(*mut XImage, i64) -> i32,
 }
 
 #[repr(C)]
@@ -916,7 +1120,9 @@ pub union XEvent {
     pub pad: [i64; 24],
 }
 
-// #define XAllocID(dpy) ((*((_XPrivDisplay)(dpy))->resource_alloc)((dpy)))
+pub unsafe fn XAllocID(display: *mut Display) -> u64 {
+    (*(*display).resource_alloc)(display)
+}
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -1180,8 +1386,8 @@ pub const XIMVisibleToCenter: i64 = 1 << 10;
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub union _XIMTextString {
-    multi_byte: *mut i8,
-    wide_char: *mut i16,
+    pub multi_byte: *mut i8,
+    pub wide_char: *mut i16,
 }
 
 #[repr(C)]
@@ -1222,8 +1428,8 @@ pub const XIMStringConversionWrapped: i64 = 0x00000020;
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub union _XIMStringConversionTextString {
-    mbs: *mut i8,
-    wcs: *mut i16,
+    pub mbs: *mut i8,
+    pub wcs: *mut i16,
 }
 
 #[repr(C)]
@@ -1310,8 +1516,8 @@ pub enum XIMStatusDataType {
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub union _XIMStatusDrawCallbackStructData {
-    text: *mut XIMText,
-    bitmap: Pixmap,
+    pub text: *mut XIMText,
+    pub bitmap: Pixmap,
 }
 
 #[repr(C)]
