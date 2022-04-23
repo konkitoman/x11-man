@@ -15,3 +15,15 @@ path = "lib/mod.rs"
 [[example]]
 name = "keyboard"
 path = "./exemples/keyboard.rs"
+
+[[example]]
+name = "mouse"
+path = "./exemples/mouse.rs"
+
+[[example]]
+name = "window"
+path = "./exemples/window.rs"
+
+[[example]]
+name = "display"
+path = "./exemples/display.rs"

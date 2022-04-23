@@ -1,5 +1,7 @@
 use std::fmt::{Display, Formatter};
 
+use crate::x::PointerGrabConfig;
+
 use super::x::GrabMode;
 
 use super::ffi::{x, xlib};
@@ -588,7 +590,7 @@ impl XDisplay {
     pub fn grab_pointer(
         &self,
         grab_window: x::Window,
-        event_mask: u32,
+        config: &PointerGrabConfig,
         confine_to: x::Window,
         cursor: u64,
     ) -> i32 {
@@ -597,7 +599,7 @@ impl XDisplay {
                 self._d,
                 grab_window,
                 self.owner_events as i32,
-                event_mask,
+                config.as_mask(),
                 self.pointer_grabmode as i32,
                 self.keyboard_grabmode as i32,
                 confine_to,
