@@ -97,9 +97,12 @@ pub const LASTEvent: i32 = 36;
 pub const ShiftMask: u32 = 1 << 0;
 pub const LockMask: u32 = 1 << 1;
 pub const ControlMask: u32 = 1 << 2;
+/// Alt
 pub const Mod1Mask: u32 = 1 << 3;
+/// numlock
 pub const Mod2Mask: u32 = 1 << 4;
 pub const Mod3Mask: u32 = 1 << 5;
+/// Tux/Windows key
 pub const Mod4Mask: u32 = 1 << 6;
 pub const Mod5Mask: u32 = 1 << 7;
 

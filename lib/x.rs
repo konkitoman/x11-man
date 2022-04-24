@@ -58,6 +58,175 @@ pub enum Errors {
     LastExtensionError = 255,
 }
 
+pub struct SelectInputConfig {}
+
+impl Default for SelectInputConfig {
+    fn default() -> Self {
+        SelectInputConfig {}
+    }
+}
+
+impl SelectInputConfig {
+    pub fn new() -> Self {
+        Default::default()
+    }
+
+    pub fn get_row(&self) -> i64 {
+        0
+    }
+}
+
+pub struct KeyGrabConfig {
+    pub keycode: i32,
+    pub modifiers: u32,
+
+    pub owner_events: bool,
+    pub keyboard_grab_mode: GrabMode,
+    pub pointer_grab_mode: GrabMode,
+}
+
+impl Default for KeyGrabConfig {
+    fn default() -> Self {
+        KeyGrabConfig {
+            keycode: 0,
+            modifiers: 0,
+
+            owner_events: true,
+            keyboard_grab_mode: GrabMode::Async,
+            pointer_grab_mode: GrabMode::Async,
+        }
+    }
+}
+
+impl KeyGrabConfig {
+    pub fn new() -> Self {
+        Default::default()
+    }
+}
+
+pub struct KeyboardGrabConfig {
+    pub owner_events: bool,
+    pub keyboard_grab_mode: GrabMode,
+    pub pointer_grab_mode: GrabMode,
+    pub time: u64,
+}
+
+impl Default for KeyboardGrabConfig {
+    fn default() -> Self {
+        KeyboardGrabConfig {
+            owner_events: true,
+            keyboard_grab_mode: GrabMode::Async,
+            pointer_grab_mode: GrabMode::Async,
+            time: 0,
+        }
+    }
+}
+
+impl KeyboardGrabConfig {
+    pub fn new() -> Self {
+        Default::default()
+    }
+}
+
+pub struct ButtonGrabConfig {
+    pub button: u32,
+    pub modifiers: u32,
+    pub button_release: bool,
+    pub pointer_motion: bool,
+
+    pub confine_to: u64,
+    pub cursor: u64,
+
+    pub owner_events: bool,
+    pub pointer_grab_mode: GrabMode,
+    pub keyboard_grab_mode: GrabMode,
+}
+
+impl Default for ButtonGrabConfig {
+    fn default() -> Self {
+        Self {
+            button: 0,
+            modifiers: 0,
+            button_release: false,
+            pointer_motion: false,
+
+            confine_to: 0,
+            cursor: 0,
+
+            owner_events: true,
+            pointer_grab_mode: GrabMode::Async,
+            keyboard_grab_mode: GrabMode::Async,
+        }
+    }
+}
+
+impl ButtonGrabConfig {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Set the button to grab.
+    /// If is 0, is grab all buttons.
+    pub fn set_button(&mut self, button: u32) -> &mut Self {
+        self.button = button;
+        self
+    }
+
+    /// S = Shift, C = Ctrl, L = Lock, M = Tux/Win, A = Alt, N = Numpad, \[ = Mod3, \] = Mod5
+    ///
+    /// Ctrl + Shift = `"C-S"`
+    ///
+    /// Alt + Shift = `"A-S"`
+    pub fn set_modifiers(&mut self, modifiers: &str) -> &mut Self {
+        let mut mods = 0u32;
+        for c in modifiers.chars() {
+            match c {
+                'S' => mods |= x::ShiftMask as u32,
+                'C' => mods |= x::ControlMask as u32,
+                'L' => mods |= x::LockMask as u32,
+                'M' => mods |= x::Mod4Mask as u32,
+                'A' => mods |= x::Mod1Mask as u32,
+                'N' => mods |= x::Mod2Mask as u32,
+                '[' => mods |= x::Mod3Mask as u32,
+                ']' => mods |= x::Mod5Mask as u32,
+                _ => {}
+            }
+        }
+        self.modifiers = mods;
+        self
+    }
+
+    /// Set if add the button release.event
+    pub fn button_release(&mut self, value: bool) -> &mut Self {
+        self.button_release = value;
+        self
+    }
+
+    /// Set if add the pointer motion.event when the button is pressed
+    pub fn pointer_motion(&mut self, value: bool) -> &mut Self {
+        self.pointer_motion = value;
+        self
+    }
+
+    /// Set all events when button is pressed
+    pub fn all(&mut self) -> &mut Self {
+        self.button_release = true;
+        self.pointer_motion = true;
+        self
+    }
+
+    pub fn as_mask(&self) -> u32 {
+        let mut mask = 0u32;
+        if self.button_release {
+            mask |= x::ButtonReleaseMask as u32;
+        }
+        if self.pointer_motion {
+            mask |= x::PointerMotionMask as u32;
+        }
+        mask
+    }
+}
+
 pub struct PointerGrabConfig {
     pub button_press: bool,
     pub button_release: bool,
@@ -67,6 +236,14 @@ pub struct PointerGrabConfig {
     pub button4: bool,
     pub button5: bool,
     pub pointer_motion: bool,
+
+    pub confine_to: u64,
+    pub cursor: u64,
+
+    pub owner_events: bool,
+    pub pointer_grab_mode: GrabMode,
+    pub keyboard_grab_mode: GrabMode,
+    pub time: u64,
 }
 
 impl Default for PointerGrabConfig {
@@ -80,6 +257,14 @@ impl Default for PointerGrabConfig {
             button4: false,
             button5: false,
             pointer_motion: false,
+
+            confine_to: 0,
+            cursor: 0,
+
+            owner_events: true,
+            pointer_grab_mode: GrabMode::Async,
+            keyboard_grab_mode: GrabMode::Async,
+            time: 0,
         }
     }
 }
