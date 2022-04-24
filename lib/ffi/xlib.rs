@@ -246,7 +246,7 @@ pub struct XPixmapFormatValues {
 }
 
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Default)]
 pub struct XGCValues {
     pub function: i32,
     pub plane_mask: u64,

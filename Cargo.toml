@@ -23,7 +23,3 @@ path = "./exemples/mouse.rs"
 [[example]]
 name = "window"
 path = "./exemples/window.rs"
-
-[[example]]
-name = "display"
-path = "./exemples/display.rs"

@@ -1,3 +1,8 @@
+use std::{
+    collections::HashMap,
+    io::{stdin, Write},
+};
+
 use x11_man::{
     ffi::x::{
         Button1, Button1Mask, ButtonPressMask, ButtonReleaseMask, ControlMask, LockMask, Mod1Mask,
@@ -8,7 +13,23 @@ use x11_man::{
 };
 
 pub fn main() {
-    GrabButton.run();
+    let mut methods: HashMap<&str, &dyn TFunc> = HashMap::new();
+    methods.insert("pointer_grabing", &GrabPointer);
+    methods.insert("button_grabing", &GrabButton);
+    methods.insert("quary_pointer", &QueryPointer);
+
+    for (name, _) in methods.iter() {
+        println!("{}", name);
+    }
+
+    print!("Enter method name: ");
+    let mut stdout = std::io::stdout();
+    stdout.flush().unwrap();
+    let stdint = stdin();
+    let mut method_name = String::new();
+    stdint.read_line(&mut method_name).unwrap();
+    let method_name = method_name.trim();
+    methods[method_name].run();
 }
 
 pub trait TFunc {
@@ -88,6 +109,23 @@ impl TFunc for GrabButton {
                     println!("{:?}", event);
                 }
             }
+        }
+    }
+}
+
+pub struct QueryPointer;
+
+impl TFunc for QueryPointer {
+    fn run(&self) {
+        let display = XDisplay::new(None);
+        let root = display.root_window(display.default_screen());
+
+        loop {
+            let pointer = display.quary_pointer(root);
+            println!(
+                "Pointer: X: {}, Y: {}, Mask: {}",
+                pointer.root_x, pointer.root_y, pointer.mask
+            );
         }
     }
 }

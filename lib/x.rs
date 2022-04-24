@@ -1,4 +1,7 @@
-use crate::ffi::x;
+use crate::{
+    ffi::{self, x},
+    xlib::{Event, TInput, XDisplay},
+};
 
 #[derive(Debug, Copy, Clone)]
 pub enum GrabMode {
@@ -58,6 +61,136 @@ pub enum Errors {
     LastExtensionError = 255,
 }
 
+pub struct SimpleWindow {
+    pub _w: u64,
+    pub display: XDisplay,
+}
+
+impl SimpleWindow {
+    pub fn new(display: &XDisplay, width: u32, height: u32) -> Self {
+        let _w = unsafe {
+            ffi::xlib::XCreateSimpleWindow(
+                display._d,
+                display.root_window(display.default_screen()),
+                0,
+                0,
+                width,
+                height,
+                0,
+                ffi::xlib::BlackPixel(display._d, display.default_screen()),
+                ffi::xlib::WhitePixel(display._d, display.default_screen()),
+            )
+        };
+        unsafe {
+            ffi::xlib::XMapWindow(display._d, _w);
+        }
+        Self {
+            _w,
+            display: display.clone(),
+        }
+    }
+}
+
+impl TInput for SimpleWindow {
+    fn grab_key(&self, config: &KeyGrabConfig) {
+        unsafe {
+            ffi::xlib::XGrabKey(
+                self.display._d,
+                config.keycode,
+                config.modifiers,
+                self._w,
+                config.owner_events as i32,
+                config.pointer_grab_mode as i32,
+                config.keyboard_grab_mode as i32,
+            );
+        }
+    }
+
+    fn grab_button(&self, config: &ButtonGrabConfig) {
+        unsafe {
+            ffi::xlib::XGrabButton(
+                self.display._d,
+                config.button,
+                config.modifiers,
+                self._w,
+                config.owner_events as i32,
+                config.as_mask(),
+                config.pointer_grab_mode as i32,
+                config.keyboard_grab_mode as i32,
+                config.confine_to,
+                config.cursor,
+            );
+        }
+    }
+
+    fn grab_pointer(&self, config: &PointerGrabConfig) {
+        unsafe {
+            ffi::xlib::XGrabPointer(
+                self.display._d,
+                self._w,
+                config.owner_events as i32,
+                config.as_mask(),
+                config.pointer_grab_mode as i32,
+                config.keyboard_grab_mode as i32,
+                config.confine_to,
+                config.cursor,
+                config.time,
+            );
+        }
+    }
+
+    fn grab_keyboard(&self, config: &KeyboardGrabConfig) {
+        unsafe {
+            ffi::xlib::XGrabKeyboard(
+                self.display._d,
+                self._w,
+                config.owner_events as i32,
+                config.pointer_grab_mode as i32,
+                config.keyboard_grab_mode as i32,
+                config.time,
+            );
+        }
+    }
+
+    fn ungrab_key(&self, config: &KeyGrabConfig) {
+        unsafe {
+            ffi::xlib::XUngrabKey(self.display._d, config.keycode, config.modifiers, self._w);
+        }
+    }
+
+    fn ungrab_button(&self, config: &ButtonGrabConfig) {
+        unsafe {
+            ffi::xlib::XUngrabButton(self.display._d, config.button, config.modifiers, self._w);
+        }
+    }
+
+    fn ungrab_pointer(&self, config: &PointerGrabConfig) {
+        unsafe {
+            ffi::xlib::XUngrabPointer(self.display._d, config.time);
+        }
+    }
+
+    fn ungrab_keyboard(&self, config: &KeyboardGrabConfig) {
+        unsafe {
+            ffi::xlib::XUngrabKeyboard(self.display._d, config.time);
+        }
+    }
+
+    fn select_input(&self, config: &SelectInputConfig) {
+        unsafe {
+            ffi::xlib::XSelectInput(self.display._d, self._w, config.get_row());
+        }
+    }
+
+    fn next_event(&self) -> crate::xlib::Event {
+        unsafe {
+            let mut event = crate::ffi::xlib::XEvent { _type: 0 };
+            ffi::xlib::XNextEvent(self.display._d, &mut event);
+            Event::from_raw(&event)
+        }
+    }
+}
+
 pub struct SelectInputConfig {}
 
 impl Default for SelectInputConfig {
@@ -72,7 +205,7 @@ impl SelectInputConfig {
     }
 
     pub fn get_row(&self) -> i64 {
-        0
+        ffi::x::ExposureMask as i64
     }
 }
 
