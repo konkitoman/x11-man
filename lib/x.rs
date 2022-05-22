@@ -189,6 +189,10 @@ impl TInput for SimpleWindow {
             Event::from_raw(&event)
         }
     }
+
+    fn try_next_event(&self) -> Option<Event> {
+        self.display.try_next_event()
+    }
 }
 
 pub struct SelectInputConfig {}

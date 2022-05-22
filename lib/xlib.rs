@@ -1,4 +1,5 @@
 use std::fmt::{Display, Formatter};
+use std::time::Duration;
 
 use crate::x::{
     ButtonGrabConfig, KeyGrabConfig, KeyboardGrabConfig, PointerGrabConfig, SelectInputConfig,
@@ -33,6 +34,12 @@ pub trait TInput {
     fn ungrab_keyboard(&self, config: &KeyboardGrabConfig);
     fn select_input(&self, config: &SelectInputConfig);
     fn next_event(&self) -> Event;
+    fn try_next_event(&self) -> Option<Event>;
+}
+
+pub struct GC {
+    pub _gc: *mut xlib::GC,
+    pub _gc_values: xlib::XGCValues,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -314,6 +321,18 @@ impl TInput for XDisplay {
         unsafe {
             xlib::XNextEvent(self._d, &mut event);
             Event::from_raw(&event)
+        }
+    }
+
+    fn try_next_event(&self) -> Option<Event> {
+        let mut event = xlib::XEvent { _type: 0 };
+        unsafe {
+            let res = xlib::XCheckMaskEvent(self._d, -1, &mut event);
+            if res == 0 {
+                None
+            } else {
+                Some(Event::from_raw(&event))
+            }
         }
     }
 }
