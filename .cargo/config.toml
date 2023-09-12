@@ -1,0 +1,5 @@
+rustflags = [
+      "-C", "link-arg=-fuse-ld=lld",
+    "-C", "link-arg=-F",
+]
+linker="clang"

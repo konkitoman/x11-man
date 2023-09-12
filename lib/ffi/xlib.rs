@@ -340,7 +340,7 @@ pub struct ScreenFormat {
 }
 
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Default)]
 pub struct XSetWindowAttributes {
     pub background_pixmap: Pixmap,
     pub background_pixel: u64,
@@ -385,6 +385,36 @@ pub struct XWindowAttributes {
     pub do_not_propagate_mask: i64,
     pub override_redirect: Bool,
     pub screen: *mut Screen,
+}
+
+impl XWindowAttributes {
+    pub fn new() -> Self {
+        Self {
+            x: 0,
+            y: 0,
+            width: 0,
+            height: 0,
+            border_width: 0,
+            depth: 0,
+            visual: std::ptr::null_mut(),
+            root: Window::default(),
+            class: 0,
+            bit_gravity: 0,
+            win_gravity: 0,
+            backing_store: 0,
+            backing_planes: 0,
+            backing_pixel: 0,
+            save_under: False,
+            colormap: Colormap::default(),
+            map_installed: False,
+            map_state: 0,
+            all_event_masks: 0,
+            your_event_mask: 0,
+            do_not_propagate_mask: 0,
+            override_redirect: False,
+            screen: std::ptr::null_mut(),
+        }
+    }
 }
 
 #[repr(C)]
@@ -433,7 +463,7 @@ pub struct XImage {
         bitmap_pad: i32,
         bytes_per_line: i32,
     ) -> *mut XImage,
-    pub destroy_image: *mut extern "C" fn(*mut XImage) -> i32,
+    pub destroy_image: extern "C" fn(*mut XImage) -> i32,
     pub get_pixel: *mut extern "C" fn(*mut XImage, i32, i32) -> u64,
     pub put_pixel: *mut extern "C" fn(*mut XImage, i32, i32, u64) -> i32,
     pub sub_image: *mut extern "C" fn(*mut XImage, i32, i32, u32, u32) -> *mut XImage,
@@ -1818,10 +1848,7 @@ extern "C" {
         handler: XIOErrorExitHandler,
         user_data: *mut i8,
     );
-}
 
-#[link(name = "X11", kind = "dylib")]
-extern "C" {
     pub fn XListPixmapFormats(
         display: *mut Display,
         count_return: *mut i32,
